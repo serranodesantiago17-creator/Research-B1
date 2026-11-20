@@ -26,5 +26,21 @@
 <script src="js/data-units-1-6.js"></script>
 <script src="js/data-units-7-12.js"></script>
 <script src="js/app.js"></script>
+<!-- GoatCounter: visitas totales y por unidad -->
+<script data-goatcounter="https://serranodesantiago.goatcounter.com/count" data-goatcounter-settings='{"no_onload": true}' async src="//gc.zgo.at/count.js"></script>
+<script>
+(function () {
+  var last = "";
+  function page() { return location.pathname + ((location.hash || "#/inicio").replace(/\/(s\d+|diario)$/, "")); }
+  function count(tries) {
+    var p = page();
+    if (p === last) return;
+    if (window.goatcounter && window.goatcounter.count) { last = p; window.goatcounter.count({ path: p, title: document.title }); }
+    else if ((tries || 0) < 50) setTimeout(function () { count((tries || 0) + 1); }, 200);
+  }
+  window.addEventListener("load", function () { count(0); });
+  window.addEventListener("hashchange", function () { count(0); });
+})();
+</script>
 </body>
 </html>
