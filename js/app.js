@@ -78,6 +78,7 @@
     let h = `<div class="group">Workbook</div>
       <a href="#/inicio" data-r="inicio"><span class="num">★</span>Inicio y cómo usarlo</a>
       <a href="#/portafolio" data-r="portafolio"><span class="num">✓</span>Mi portafolio</a>
+      <a href="#/audios" data-r="audios"><span class="num">♪</span>Audios del libro</a>
       <div class="group">Semestre 1</div>`;
     UNITS.forEach(u => {
       if (u.n === 7) h += `<div class="group">Semestre 2</div>`;
@@ -328,6 +329,7 @@
       <p class="ex-note">Los estudios, personajes y textos marcados como <em>written for this workbook</em> son ficticios y sirven para practicar.</p>` + footer();
   }
 
+  const BOOK_TRACKS = [{"id": "1.1", "title": "The welcome seminar", "who": "Fiona MacLeod (female, Scottish English), Daniela (female, Mexican English), Luis (male, Mexican English)"}, {"id": "1.2", "title": "Research Voices: Dr Ji-woo Park", "who": "Ji-woo Park (female, Korean English)"}, {"id": "2.1", "title": "Refining a question", "who": "Amara Okafor (female, Nigerian English), Daniela (female, Mexican English)"}, {"id": "2.2", "title": "Research Voices: Rajesh Iyer", "who": "Rajesh Iyer (male, Indian English)"}, {"id": "3.1", "title": "At the university library", "who": "Librarian Teresa Ruiz (female, Mexican English), Mariana (female, Mexican English), Iván (male, Mexican English)"}, {"id": "3.2", "title": "Research Voices: Camila Souza", "who": "Camila Souza (female, Brazilian English)"}, {"id": "4.1", "title": "Experiments and surveys", "who": "Dr Héctor Salas (male, Mexican English), lecture style with pauses"}, {"id": "4.2", "title": "Research Voices: Sarah Whitfield", "who": "Sarah Whitfield (female, US English)"}, {"id": "5.1", "title": "An interview with a returned migrant", "who": "Sofía (female, Mexican English), Don Pedro (male, 60s, Mexican English learned in the US)"}, {"id": "5.2", "title": "Research Voices: Aroha Ngata", "who": "Aroha Ngata (female, New Zealand English)"}, {"id": "6.1", "title": "The ethics committee", "who": "Chair, Dr Lucía Ferrer (female, Mexican English), Dr Amara Okafor (female, Nigerian English), Iván (male, Mexican English)"}, {"id": "6.2", "title": "Research Voices: Lena Fischer", "who": "Lena Fischer (female, German English)"}, {"id": "7.1", "title": "Daniela presents her results", "who": "Daniela (female, Mexican English), with a short question from Fiona MacLeod (Scottish English)"}, {"id": "7.2", "title": "Research Voices: Priya Nair", "who": "Priya Nair (female, British English with an Indian background)"}, {"id": "8.1", "title": "An unexpected result", "who": "Ji-woo Park (female, Korean English), Luis (male, Mexican English)"}, {"id": "8.2", "title": "Research Voices: Kofi Asante", "who": "Kofi Asante (male, Ghanaian English)"}, {"id": "9.1", "title": "An editor's advice", "who": "Dr Helen Brooks (female, Australian English)"}, {"id": "9.2", "title": "Research Voices: Yuki Tanaka", "who": "Yuki Tanaka (female, Japanese English)"}, {"id": "10.1", "title": "Luis's conference talk", "who": "Luis (male, Mexican English), presentation style"}, {"id": "10.2", "title": "Research Voices: Mariam Haddad", "who": "Mariam Haddad (female, Lebanese English)"}, {"id": "11.1", "title": "Planning the stay", "who": "Rachel Moore (female, US English), Daniela (female, Mexican English)"}, {"id": "11.2", "title": "Research Voices: Nasrin Akter", "who": "Nasrin Akter (female, Bangladeshi English)"}, {"id": "12.1", "title": "Science on the radio", "who": "Radio host (male, Mexican English), Daniela (female, Mexican English)"}, {"id": "12.2", "title": "Research Voices: Fiona MacLeod", "who": "Fiona MacLeod (female, Scottish English)"}];
   const PORTFOLIO = ["Academic bio", "Problem statement", "Summary with citation", "Comparison paragraph", "Reflective field notes", "Information sheet and consent form", "Graph description", "Discussion paragraph", "Abstract", "Poster text", "Formal email", "Lay summary"];
   function renderPortfolio() {
     markActive("portafolio");
@@ -339,6 +341,19 @@
       <div class="actions"><button class="btn ghost" id="wipe">Borrar todas mis respuestas guardadas</button></div>` + footer();
     app.querySelectorAll("[data-i]").forEach(c => c.onchange = () => { const o = store.get("portfolio", {}); o[c.dataset.i] = c.checked; store.set("portfolio", o); });
     document.getElementById("wipe").onclick = () => { if (confirmWipe()) { Object.keys(localStorage).filter(k => k.startsWith(LS)).forEach(k => localStorage.removeItem(k)); renderSidebar(); renderPortfolio(); } };
+  }
+  function renderAudios() {
+    markActive("audios");
+    app.innerHTML = hero({ img: { file: "GD09 Poster Session.jpg", credit: "David Eppstein", alt: "Sesión académica" }, icon: "mic" }, "Student's Book · 24 pistas", "Audios del libro", "Todas las pistas del Student's Book, unidad por unidad: un diálogo o conferencia (X.1) y una voz de <em>Research Voices</em> (X.2).") +
+      `<div class="callout">Escucha cada pista cuando el libro lo indique. Las voces se generaron con inteligencia artificial (Kokoro TTS, software libre) a partir de los guiones de la guía del docente, eligiendo voces cercanas a cada acento. Algunos acentos son aproximados.</div>`;
+    let u = 0;
+    BOOK_TRACKS.forEach(tr => {
+      const n = +tr.id.split(".")[0];
+      if (n !== u) { u = n; const un = UNITS.find(x => x.n === n); app.appendChild(el(`<div class="section-title"><span class="tag">Unit ${n}</span><h2>${esc(un ? un.title : "")}</h2></div>`)); }
+      app.appendChild(el(`<div class="ex"><div class="ex-head"><div class="ex-num">${esc(tr.id)}</div><div><div class="ex-prompt">${esc(tr.title)}</div><div class="ex-note">${esc(tr.who)}</div></div></div>${audioSlot(tr.id, "")}</div>`));
+    });
+    app.appendChild(el(footer()));
+    wireAudio(app);
   }
   function confirmWipe() { const b = document.getElementById("wipe"); if (b.dataset.armed) return true; b.dataset.armed = "1"; b.textContent = "Pulsa otra vez para confirmar"; return false; }
   const footer = () => `<footer class="site">Research Pathways B1 · Workbook · Posgrados UAZ. Las fotografías provienen de Wikimedia Commons (dominio público o licencias libres; ver créditos en cada unidad).</footer>`;
@@ -352,6 +367,7 @@
       const n = +m[1];
       if (app.dataset.page !== "u" + n) { renderUnit(n); app.dataset.page = "u" + n; window.scrollTo(0, 0); }
       if (m[2]) { const t = document.getElementById(`u${n}-${m[2]}`); if (t) t.scrollIntoView({ behavior: "smooth" }); }
+    } else if (h.startsWith("#/audios")) { renderAudios(); app.dataset.page = "a"; window.scrollTo(0, 0);
     } else if (h.startsWith("#/portafolio")) { renderPortfolio(); app.dataset.page = "p"; window.scrollTo(0, 0); }
     else { renderHome(); app.dataset.page = "h"; window.scrollTo(0, 0); }
   }
