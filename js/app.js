@@ -309,8 +309,17 @@
         <li>En opción múltiple la explicación aparece al elegir. Puedes volver a intentar.</li>
         <li>En escritura y <em>My research</em> escribe primero tu versión; luego puedes abrir la <strong>respuesta modelo</strong> para comparar.</li>
         <li>Los ejercicios <em>Listen again</em> tienen un reproductor con la pista del Student's Book.</li>
-        <li>Todo lo que escribes se guarda en este navegador (no se envía a ningún servidor).</li></ul></div>
+        <li>Todo lo que escribes se guarda en este navegador (no se envía a ningún servidor). Para entregar tu avance, ve a <a href="#/portafolio">Mi portafolio</a> y descarga tus resultados para enviarlos a tu docente.</li></ul></div>
       <h2>Unidades</h2><div class="grid">${UNITS.map(u => `<a class="ucard" href="#/unidad/${u.n}"><div class="thumb"><div class="fallback">${icon(u.icon)}</div><img src="${commons(u.img.file).replace("width=1200", "width=500")}" alt="" loading="lazy" onerror="this.remove()"></div><div class="body"><small>Unit ${u.n}</small><strong>${esc(u.title)}</strong><div class="mini"><span style="width:${unitPct(u)}%"></span></div></div></a>`).join("")}</div>
+      <h2>Por qué funciona este workbook</h2>
+      <p>El workbook sigue principios claros de la investigación sobre el aprendizaje de lenguas y el diseño curricular.</p>
+      <table class="t"><tr><th>Principio</th><th>Fuente</th><th>Cómo lo ves aquí</th></tr>
+      <tr><td>Autonomía: tú diriges tu propio aprendizaje</td><td>Holec (1981)</td><td>Retroalimentación inmediata, respuestas modelo, diario de aprendizaje y portafolio</td></tr>
+      <tr><td>Anticipar, actuar, reflexionar</td><td>OECD Learning Compass 2030 (OECD, 2019)</td><td>Planeas tu tiempo de estudio, haces los ejercicios y escribes tu diario</td></tr>
+      <tr><td>Reciclaje en espiral</td><td>Taba (1962); Nation y Macalister (2010)</td><td>Cada unidad reutiliza lenguaje de unidades anteriores en contextos nuevos</td></tr>
+      <tr><td>La escritura como proceso</td><td>Swales y Feak (2012)</td><td>Tu texto de clase se convierte aquí en un segundo borrador</td></tr>
+      <tr><td>Transferencia a tareas reales</td><td>Enfoque orientado a la acción del MCER (Council of Europe, 2020)</td><td><em>My research</em> aplica cada unidad a tu propio proyecto</td></tr>
+      <tr><td>Escucha cuidadosa</td><td>H. D. Brown (2007)</td><td><em>Listen again</em> propone tareas nuevas con el mismo audio</td></tr></table>
       <h2>Qué hay en cada unidad</h2>
       <table class="t"><tr><th>Sección</th><th>Tiempo</th><th>Qué haces</th></tr>
       <tr><td>Vocabulary</td><td>30 min</td><td>Practicas el vocabulario de investigación en contextos nuevos</td></tr>
@@ -338,8 +347,16 @@
       `<div class="ex"><ul class="checklist" style="font-size:1rem">${PORTFOLIO.map((p, i) => `<li><input type="checkbox" id="pf${i}" data-i="${i}" ${s[i] ? "checked" : ""}><label for="pf${i}"><a href="#/unidad/${i + 1}">Unit ${i + 1}</a> · ${p}</label></li>`).join("")}</ul></div>
       <div class="callout">Al final del curso compara tu <em>bio</em> de la Unidad 1 con tu <em>lay summary</em> de la Unidad 12 (Unit 12, ejercicio 8).</div>
       <h2>Progreso por unidad</h2><table class="t"><tr><th>Unidad</th><th>Autocorrección</th></tr>${UNITS.map(u => `<tr><td><a href="#/unidad/${u.n}">Unit ${u.n} · ${esc(u.title)}</a></td><td>${unitPct(u)}%</td></tr>`).join("")}</table>
+      <h2 id="enviar">Enviar mis resultados a mi docente</h2>
+      <div class="ex"><p style="margin-top:0">Descarga un archivo de Excel (CSV) con tus puntajes de autocorrección por ejercicio y por unidad, tus textos de escritura y <em>My research</em>, tu diario de aprendizaje y tu portafolio. Después envíalo a tu docente por correo o por la plataforma del curso.</p>
+        <div class="field-label">Nombre completo</div><input class="full" id="stName" autocomplete="name" value="${esc(store.get("student", {}).name || "")}">
+        <div class="field-label">Matrícula o correo institucional</div><input class="full" id="stId" value="${esc(store.get("student", {}).id || "")}">
+        <div class="field-label">Grupo (opcional)</div><input class="full" id="stGroup" value="${esc(store.get("student", {}).group || "")}">
+        <div class="actions"><button class="btn" id="dlRes">Descargar mis resultados (Excel)</button><span class="saved" id="dlMsg">El archivo se crea en tu computadora; nada se envía automáticamente.</span></div></div>
       <div class="actions"><button class="btn ghost" id="wipe">Borrar todas mis respuestas guardadas</button></div>` + footer();
     app.querySelectorAll("[data-i]").forEach(c => c.onchange = () => { const o = store.get("portfolio", {}); o[c.dataset.i] = c.checked; store.set("portfolio", o); });
+    ["stName", "stId", "stGroup"].forEach(id => document.getElementById(id).addEventListener("input", () => store.set("student", { name: document.getElementById("stName").value, id: document.getElementById("stId").value, group: document.getElementById("stGroup").value })));
+    document.getElementById("dlRes").onclick = downloadResults;
     document.getElementById("wipe").onclick = () => { if (confirmWipe()) { Object.keys(localStorage).filter(k => k.startsWith(LS)).forEach(k => localStorage.removeItem(k)); renderSidebar(); renderPortfolio(); } };
   }
   function renderAudios() {
@@ -354,6 +371,37 @@
     });
     app.appendChild(el(footer()));
     wireAudio(app);
+  }
+  function downloadResults() {
+    const st = store.get("student", {}), msg = document.getElementById("dlMsg");
+    if (!(st.name || "").trim()) { msg.textContent = "Escribe tu nombre antes de descargar."; msg.style.color = "var(--bad)"; document.getElementById("stName").focus(); return; }
+    const now = new Date(), fecha = now.toISOString().slice(0, 10);
+    const rows = [["Nombre", "Matrícula/correo", "Grupo", "Fecha", "Unidad", "Sección", "Ejercicio", "Tipo", "Puntaje (%)", "Respuesta del estudiante"]];
+    const add = (u, sec, ex, tipo, score, resp) => rows.push([st.name, st.id || "", st.group || "", fecha, u, sec, ex, tipo, score, resp]);
+    const kinds = { gaps: "Autocorrección", choice: "Autocorrección", rewrite: "Autocorrección", open: "Producción libre" };
+    UNITS.forEach(u => {
+      const done = store.get("done:" + u.n, {});
+      add(`Unit ${u.n} · ${u.title}`, "RESUMEN", "", "Promedio de autocorrección", unitPct(u), "");
+      u.sections.forEach((sct, si) => sct.ex.forEach((e, ei) => {
+        const key = `${u.n}-${si}-${ei}`;
+        if (isGraded(e)) add(`Unit ${u.n}`, sct.h, e.num, kinds[e.type], key in done ? Math.round(done[key] * 100) : "sin hacer", "");
+        else {
+          const o = store.get("open:" + key, {}), fields = e.fields || [{ label: "" }];
+          const txt = fields.map((f, i) => (o[i] || "").trim() ? (f.label ? f.label + ": " : "") + o[i].trim() : "").filter(Boolean).join(" | ");
+          add(`Unit ${u.n}`, sct.h, e.num, kinds.open, "", txt || "sin hacer");
+        }
+      }));
+      const d = store.get("diary:" + u.n, {});
+      DIARY.forEach((q, i) => add(`Unit ${u.n}`, "Learning diary", String(i + 1), q, "", (d[i] || "").trim() || "sin hacer"));
+    });
+    const pf = store.get("portfolio", {});
+    PORTFOLIO.forEach((p, i) => add(`Unit ${i + 1}`, "Portafolio", p, "Versión final lista", "", pf[i] ? "Sí" : "No"));
+    const csv = "\ufeff" + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""').replace(/\r?\n/g, " ")}"`).join(",")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `resultados-RPB1-${st.name.trim().replace(/\s+/g, "_").replace(/[^\w\-áéíóúñÁÉÍÓÚÑ]/g, "")}-${fecha}.csv`;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    msg.style.color = ""; msg.textContent = "Listo: revisa tu carpeta de Descargas y envía el archivo a tu docente.";
   }
   function confirmWipe() { const b = document.getElementById("wipe"); if (b.dataset.armed) return true; b.dataset.armed = "1"; b.textContent = "Pulsa otra vez para confirmar"; return false; }
   const footer = () => `<footer class="site">Research Pathways B1 · Workbook · Posgrados UAZ. Las fotografías provienen de Wikimedia Commons (dominio público o licencias libres; ver créditos en cada unidad).</footer>`;
